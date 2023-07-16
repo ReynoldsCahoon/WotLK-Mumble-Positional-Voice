@@ -2,7 +2,7 @@
 
 ## Requirements
 - Mumble 1.3.4
-- The `wow3.dll` plugin, provided here.
+- The [`wow3.dll`](https://github.com/ReynoldsCahoon/WotLK-Mumble-Positional-Voice/releases) plugin
 
 ## Instructions
 1. Install [Mumble 1.3.4](https://github.com/mumble-voip/mumble/releases/tag/1.3.4)
