@@ -5,7 +5,7 @@
 - The `wow3.dll` plugin, provided here.
 
 ## Instructions
-1. Install Mumble 1.3.4
+1. Install [Mumble 1.3.4](https://github.com/mumble-voip/mumble/releases/tag/1.3.4)
 2. Place the WoW3.dll into the Mumble plugin folder `C:\Program Files (x86)\Mumble\Versions\1.3.4\plugins` or `%AppData%\Roaming\Mumble\Plugins`
 3. In your Mumble `Audio Output` settings, enable the `Positional Audio` option
 4. In your Mumble `Plugins` settings:
