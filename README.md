@@ -16,3 +16,6 @@
 
 ## Todo
 Currently the plugin contains the context of the player (their map ID) but the Mumble server will not automatically manage users (move users or generate channels) without, as an example, a [Mumble Moderator](https://github.com/mumble-voip/mumo/tree/master) script. Without a moderation system users will all be in the same channel and their audio will be heard when near another player within range of their coordinates, regardless of which map they're on or instance they're in.
+
+## Contributors
+[@Foereaper](https://github.com/Foereaper)
