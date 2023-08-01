@@ -6,7 +6,6 @@
 # - Channel permission assignment (users shouldn't be allowed to manually move to the proximity channels)
 # - Faction separation
 # - Death state maybe?
-# - Remove empty group channels
 #
 
 #
@@ -46,6 +45,7 @@ class wowrp(MumoModule):
 
         self.initChannels = False
         self.groupChannelStore = {}
+        self.groupChannelStoreUsers = {}
         self.worldChannelStore = {}
         self.sessions = {}
         manager.subscribeServerCallbacks(self, servers)
@@ -99,7 +99,7 @@ class wowrp(MumoModule):
 
         return cid
 
-    def getOrCreateChannelByLeaderGuid(self, server, guid):
+    def getOrCreateChannelByLeaderGuid(self, server, guid, pname):
         if not self.groupChannelStore.get(guid):
             # create a new group channel, since one did not exist already
             cid = server.addChannel(str(guid), self.worldChannelStore.get(-2))
@@ -110,10 +110,18 @@ class wowrp(MumoModule):
             # store the group channel id in our lookup dictionary
             self.groupChannelStore[guid] = cid
             self.log().info("New group channel is: " + str(guid))
+
+            # create a storage for current players in group channel
+            self.groupChannelStoreUsers[cid] = {}
+            self.groupChannelStoreUsers[cid][pname] = True
+
             return cid
         else:
-            # group channel already existed, so return the channel id
-            return self.groupChannelStore.get(guid)
+            # group channel already existed, so return the channel id, and insert player into this category
+            cid = self.groupChannelStore.get(guid)
+            self.groupChannelStoreUsers[cid][pname] = True
+
+            return cid
 
     def update(self, server, state):
         log = self.log()
@@ -128,11 +136,24 @@ class wowrp(MumoModule):
         # if we get the waiting room channel id, we check if the player is in a group
         # if they are, we can assume they are in a dungeon with a party, so we fetch or create a party channel
         if self.worldChannelStore.get(-1) == cid and npi["leaderguid"] > 0:
-            cid = self.getOrCreateChannelByLeaderGuid(server, npi["leaderguid"])
+            cid = self.getOrCreateChannelByLeaderGuid(server, npi["leaderguid"], npi["char"])
+
+        # get the players' old channel state before moving them to a new state
+        # this is to clean up the dungeon channels if they are empty
+        oldstate = server.getChannelState(state.channel)
 
         # set the states' channel ID to the new ID and update the player
         state.channel = cid
         server.setState(state)
+        
+        # players' old state was a dungeon state, remove the player from the dungeon states player list
+        if(oldstate.parent == self.worldChannelStore.get(-2)):
+            self.groupChannelStoreUsers[oldstate.id].pop(npi["char"])
+
+            # if the dungeon channel user store is empty, we delete the old channel
+            if len(self.groupChannelStoreUsers[oldstate.id]) == 0:
+                server.removeChannel(oldstate.id)
+                self.groupChannelStoreUsers[oldstate.id].clear()
 
     def handle(self, server, state):
         def safe_cast(val, to_type, default=None):
@@ -162,6 +183,9 @@ class wowrp(MumoModule):
 
         if sid not in self.sessions:  # Make sure there is a dict to store states in
             self.sessions[sid] = {}
+
+        if not state.identity:
+            return
 
         update = False
         if state.session in self.sessions[sid]:
